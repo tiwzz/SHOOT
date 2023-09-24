@@ -1,0 +1,4 @@
+C:/Users/discipline/developer_workspace/code/QIqi-standard-robot/gimbal/MDK-ARM/tmp/standard_gimbal/standardgimbal/CMakeFiles/database.dir
+C:/Users/discipline/developer_workspace/code/QIqi-standard-robot/gimbal/MDK-ARM/tmp/standard_gimbal/standardgimbal/CMakeFiles/standard_gimbal.dir
+C:/Users/discipline/developer_workspace/code/QIqi-standard-robot/gimbal/MDK-ARM/tmp/standard_gimbal/standardgimbal/CMakeFiles/edit_cache.dir
+C:/Users/discipline/developer_workspace/code/QIqi-standard-robot/gimbal/MDK-ARM/tmp/standard_gimbal/standardgimbal/CMakeFiles/rebuild_cache.dir

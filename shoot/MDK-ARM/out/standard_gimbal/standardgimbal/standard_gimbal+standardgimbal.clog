@@ -1,0 +1,13 @@
+# CMSIS Build Audit File generated on 2023-09-20T09:53:39
+
+# Project Description File: c:/Users/discipline/developer_workspace/code/QIqi-standard-robot/gimbal/MDK-ARM/standard_gimbal+standardgimbal.cprj
+
+# Toolchain Configuration File: C:/Users/discipline/.vcpkg/artifacts/fd3d78d7/tools.open.cmsis.pack.cmsis.toolbox/2.0.0/etc/AC6.6.18.0.cmake
+
+# Package: ARM.CMSIS.5.9.0
+  Location: C:\Users\discipline\AppData\Local\arm\packs/ARM/CMSIS/5.9.0/
+
+  * Component: ARM::CMSIS.CORE:5.6.0
+
+# Package: Keil.STM32F4xx_DFP.2.17.1
+  Location: C:\Users\discipline\AppData\Local\arm\packs/Keil/STM32F4xx_DFP/2.17.1/

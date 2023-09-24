@@ -1,0 +1,10 @@
+solution:
+  created-by: uv2csolution@1.1.0
+  created-for: CMSIS-Toolbox@2.0.0
+  compiler: AC6
+  target-types:
+    - type: standardgimbal
+      device: STM32F407IGHx
+      optimize: none
+  projects:
+    - project: standard_gimbal.cproject.yaml

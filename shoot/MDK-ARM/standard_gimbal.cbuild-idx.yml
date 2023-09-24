@@ -1,0 +1,9 @@
+build-idx:
+  generated-by: csolution version 2.0.0
+  csolution: standard_gimbal.csolution.yaml
+  cprojects:
+    - cproject: standard_gimbal.cproject.yaml
+  cbuilds:
+    - cbuild: standard_gimbal+standardgimbal.cbuild.yml
+      project: standard_gimbal
+      configuration: +standardgimbal

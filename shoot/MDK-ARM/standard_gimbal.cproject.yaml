@@ -1,0 +1,363 @@
+project:
+  packs:
+    - pack: Keil::STM32F4xx_DFP
+    - pack: ARM::CMSIS
+    - pack: ARM::CMSIS-NN
+    - pack: ARM::CMSIS-DSP
+  setups:
+    - setup: Options for standardgimbal
+      processor:
+        trustzone: non-secure
+      add-path:
+        - ../Inc
+        - ../Drivers/STM32F4xx_HAL_Driver/Inc
+        - ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy
+        - ../Middlewares/Third_Party/FreeRTOS/Source/include
+        - ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS
+        - ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F
+        - ../Drivers/CMSIS/Device/ST/STM32F4xx/Include
+        - ../Drivers/CMSIS/Include
+        - ../application
+        - ../bsp/boards
+        - ../components/devices
+        - ../components/algorithm
+        - ../components/algorithm/Include
+        - ../components/support
+        - ../application/protocol
+        - ../components/controller
+        - ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc
+        - ../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc
+        - ../components/controller/stm32
+      debug: "on"
+      define:
+        - USE_HAL_DRIVER
+        - STM32F407xx
+        - ARM_MATH_CM4
+        # - __FPU_USED: 1U
+        # - __FPU_PRESENT: 1U
+        - ARM_MATH_MATRIX_CHECK
+        - ARM_MATH_ROUNDING
+      misc:
+        - C:
+            - -std=c99
+          C-CPP:
+            - -fno-rtti
+            - -funsigned-char
+            - -fshort-enums
+            - -fshort-wchar
+            - -ffunction-sections
+            - -Wno-packed
+            - -Wno-missing-variable-declarations
+            - -Wno-missing-prototypes
+            - -Wno-missing-noreturn
+            - -Wno-sign-conversion
+            - -Wno-nonportable-include-path
+            - -Wno-reserved-id-macro
+            - -Wno-unused-macros
+            - -Wno-documentation-unknown-command
+            - -Wno-documentation
+            - -Wno-license-management
+            - -Wno-parentheses-equality
+          CPP:
+            - -xc++
+            - -std=c++03
+          ASM:
+            - -masm=auto
+          Link:
+            - --map
+            - --load_addr_map_info
+            - --xref
+            - --callgraph
+            - --symbols
+            - --info sizes
+            - --info totals
+            - --info unused
+            - --info veneers
+            - --list
+            - --strict
+            - --summary_stderr
+            - --info summarysizes
+  linker:
+    - script: standard_gimbal_standardgimbal.sct
+  groups:
+    - group: Application/MDK-ARM
+      files:
+        - file: startup_stm32f407xx.s
+    - group: Application/User
+      files:
+        - file: ../Src/main.c
+        - file: ../Src/gpio.c
+        - file: ../Src/freertos.c
+        - file: ../Src/adc.c
+        - file: ../Src/can.c
+        - file: ../Src/crc.c
+        - file: ../Src/dma.c
+        - file: ../Src/i2c.c
+        - file: ../Src/rng.c
+        - file: ../Src/rtc.c
+        - file: ../Src/spi.c
+        - file: ../Src/tim.c
+        - file: ../Src/usart.c
+        - file: ../Src/usb_device.c
+        - file: ../Src/usbd_conf.c
+        - file: ../Src/usbd_desc.c
+        - file: ../Src/usbd_cdc_if.c
+        - file: ../Src/stm32f4xx_it.c
+        - file: ../Src/stm32f4xx_hal_msp.c
+    - group: Drivers/CMSIS
+      files:
+        - file: ../Src/system_stm32f4xx.c
+    - group: boards
+      files:
+        - file: ../bsp/boards/bsp_adc.c
+        - file: ../bsp/boards/bsp_buzzer.c
+        - file: ../bsp/boards/bsp_can.c
+        - file: ../bsp/boards/bsp_crc32.c
+        - file: ../bsp/boards/bsp_delay.c
+        - file: ../bsp/boards/bsp_flash.c
+        - file: ../bsp/boards/bsp_fric.c
+        - file: ../bsp/boards/bsp_imu_pwm.c
+        - file: ../bsp/boards/bsp_i2c.c
+        - file: ../bsp/boards/bsp_laser.c
+        - file: ../bsp/boards/bsp_led.c
+        - file: ../bsp/boards/bsp_rc.c
+        - file: ../bsp/boards/bsp_rng.c
+        - file: ../bsp/boards/bsp_spi.c
+        - file: ../bsp/boards/bsp_usart.c
+        - file: ../bsp/boards/bsp_servo_pwm.c
+        - file: ../bsp/boards/bsp_dwt.c
+        - file: ../bsp/boards/bsp_PWM.c
+    - group: applications
+      files:
+        - file: ../application/chassis_task.c
+        - file: ../application/detect_task.c
+        - file: ../application/gimbal_behaviour.c
+        - file: ../application/gimbal_task.c
+        - file: ../application/referee.c
+        - file: ../application/referee_usart_task.c
+        - file: ../application/remote_control.c
+        - file: ../application/CAN_receive.c
+        - file: ../application/led_flow_task.c
+        - file: ../application/shoot_task.c
+        - file: ../application/vision_task.c
+        - file: ../application/INS_task.c
+    - group: devices
+      files:
+        - file: ../components/devices/OLED.c
+        - file: ../components/devices/BMI088driver.c
+        - file: ../components/devices/BMI088Middleware.c
+        - file: ../components/devices/ist8310driver.c
+        - file: ../components/devices/ist8310driver_middleware.c
+    - group: algorithm
+      files:
+        - file: ../components/algorithm/AHRS.lib
+        - file: ../components/algorithm/AHRS_middleware.c
+        - file: ../components/algorithm/arm_cortexM4lf_math.lib
+        - file: ../components/algorithm/user_lib.c
+        - file: ../components/algorithm/QuaternionEKF.c
+        - file: ../components/algorithm/kalman_filter.c
+    - group: support
+      files:
+        - file: ../components/support/CRC8_CRC16.c
+        - file: ../components/support/fifo.c
+        - file: ../components/support/mem_mang4.c
+    - group: controller
+      files:
+        - file: ../components/controller/pid.c
+        - file: ../components/controller/controller.c
+        - file: ../components/controller/stm32/stm32.c
+    - group: Drivers/STM32F4xx_HAL_Driver
+      optimize: none
+      misc:
+        - CPP:
+            - -xc++
+      files:
+        - file: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pcd.c
+          misc:
+            - CPP:
+                - -xc++
+        - file: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pcd_ex.c
+          misc:
+            - CPP:
+                - -xc++
+        - file: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_ll_usb.c
+          misc:
+            - CPP:
+                - -xc++
+        - file: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc.c
+          misc:
+            - CPP:
+                - -xc++
+        - file: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc_ex.c
+          misc:
+            - CPP:
+                - -xc++
+        - file: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash.c
+          misc:
+            - CPP:
+                - -xc++
+        - file: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash_ex.c
+          misc:
+            - CPP:
+                - -xc++
+        - file: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash_ramfunc.c
+          misc:
+            - CPP:
+                - -xc++
+        - file: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.c
+          misc:
+            - CPP:
+                - -xc++
+        - file: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_dma_ex.c
+          misc:
+            - CPP:
+                - -xc++
+        - file: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_dma.c
+          misc:
+            - CPP:
+                - -xc++
+        - file: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr.c
+          misc:
+            - CPP:
+                - -xc++
+        - file: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr_ex.c
+          misc:
+            - CPP:
+                - -xc++
+        - file: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_cortex.c
+          misc:
+            - CPP:
+                - -xc++
+        - file: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal.c
+          misc:
+            - CPP:
+                - -xc++
+        - file: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_exti.c
+          misc:
+            - CPP:
+                - -xc++
+        - file: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_adc.c
+          misc:
+            - CPP:
+                - -xc++
+        - file: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_adc_ex.c
+          misc:
+            - CPP:
+                - -xc++
+        - file: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c
+          misc:
+            - CPP:
+                - -xc++
+        - file: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_crc.c
+          misc:
+            - CPP:
+                - -xc++
+        - file: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_i2c.c
+          misc:
+            - CPP:
+                - -xc++
+        - file: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_i2c_ex.c
+          misc:
+            - CPP:
+                - -xc++
+        - file: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rng.c
+          misc:
+            - CPP:
+                - -xc++
+        - file: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rtc.c
+          misc:
+            - CPP:
+                - -xc++
+        - file: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rtc_ex.c
+          misc:
+            - CPP:
+                - -xc++
+        - file: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_spi.c
+          misc:
+            - CPP:
+                - -xc++
+        - file: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim.c
+          misc:
+            - CPP:
+                - -xc++
+        - file: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim_ex.c
+          misc:
+            - CPP:
+                - -xc++
+        - file: ../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_uart.c
+          misc:
+            - CPP:
+                - -xc++
+    - group: Middlewares/FreeRTOS
+      optimize: none
+      misc:
+        - CPP:
+            - -xc++
+      files:
+        - file: ../Middlewares/Third_Party/FreeRTOS/Source/croutine.c
+          misc:
+            - CPP:
+                - -xc++
+        - file: ../Middlewares/Third_Party/FreeRTOS/Source/event_groups.c
+          misc:
+            - CPP:
+                - -xc++
+        - file: ../Middlewares/Third_Party/FreeRTOS/Source/list.c
+          misc:
+            - CPP:
+                - -xc++
+        - file: ../Middlewares/Third_Party/FreeRTOS/Source/queue.c
+          misc:
+            - CPP:
+                - -xc++
+        - file: ../Middlewares/Third_Party/FreeRTOS/Source/stream_buffer.c
+          misc:
+            - CPP:
+                - -xc++
+        - file: ../Middlewares/Third_Party/FreeRTOS/Source/tasks.c
+          misc:
+            - CPP:
+                - -xc++
+        - file: ../Middlewares/Third_Party/FreeRTOS/Source/timers.c
+          misc:
+            - CPP:
+                - -xc++
+        - file: ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS/cmsis_os.c
+          misc:
+            - CPP:
+                - -xc++
+        - file: ../Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/heap_4.c
+          misc:
+            - CPP:
+                - -xc++
+        - file: ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F/port.c
+          misc:
+            - CPP:
+                - -xc++
+    - group: Middlewares/USB_Device_Library
+      optimize: none
+      misc:
+        - CPP:
+            - -xc++
+      files:
+        - file: ../Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_core.c
+          misc:
+            - CPP:
+                - -xc++
+        - file: ../Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c
+          misc:
+            - CPP:
+                - -xc++
+        - file: ../Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ioreq.c
+          misc:
+            - CPP:
+                - -xc++
+        - file: ../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c
+          misc:
+            - CPP:
+                - -xc++
+    - group: readme
+      files:
+        - file: ../README.md
+  components:
+    - component: ARM::CMSIS:CORE
