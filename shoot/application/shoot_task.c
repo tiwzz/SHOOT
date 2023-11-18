@@ -1,12 +1,12 @@
 /**
  * @file shoot_task.c
- * @author yuanluochen 
+ * @author yuanluochen
  * @brief ÉÚ±ø·¢µ¯ÈÎÎñ£¬½ÓÊÕÊÓ¾õÈÎÎñÖ¸Áî·¢ËÍµ¯Íè
  * @version 0.1
  * @date 2023-05-11
- * 
+ *
  * @copyright Copyright (c) 2023
- * 
+ *
  */
 #include "shoot_task.h"
 #include "main.h"
@@ -41,49 +41,48 @@ static void Shoot_Feedback_Update(void);
 static void fric_control_loop(fric_move_t *fric_move_control_loop);
 /**
  * @brief ²¦µ¯ÅÌ¿ØÖÆÑ­»·
- * 
+ *
  */
-static void trigger_control_loop(Shoot_Motor_t* trigger_move_control_loop);
+static void trigger_control_loop(Shoot_Motor_t *trigger_move_control_loop);
 
 /**
  * @brief ÉèÖÃ·¢Éä¿ØÖÆÄ£Ê½
- * 
+ *
  */
-static void shoot_set_control_mode(fric_move_t* fric_set_control);
+static void shoot_set_control_mode(fric_move_t *fric_set_control);
 
 /**
- * @brief Éä»÷Ä£Ê½ÇĞ»»Êı¾İ¹ı¶É 
- * 
+ * @brief Éä»÷Ä£Ê½ÇĞ»»Êı¾İ¹ı¶É
+ *
  */
 static void shoot_mode_change_transit(void);
 
 /**
  * @brief ÅĞ¶ÏÊÇ·ñ¿¨µ¯
- * 
+ *
  * @param trigger_stuck ¿¨µ¯½á¹¹Ìå
  * @return bool_t ·µ»Ø1 ¿¨µ¯ ·µ»Ø0 ²»¿¨µ¯
  */
-static bool_t judge_bullet_is_stuck(Shoot_Motor_t* trigger_stuck);
+static bool_t judge_bullet_is_stuck(Shoot_Motor_t *trigger_stuck);
 
 /**
  * @brief  Éä»÷³õÊ¼»¯
  */
 void shoot_init(void);
 
-
-
 /*----------------------------------ÄÚ²¿±äÁ¿---------------------------*/
 fp32 fric;
 int a = 0;
-	fp32 motor_last_angle=0;
-	fp32 sum=0;
+fp32 motor_last_angle = 0;
+fp32 sum = 0;
 int b = 0;
+int turnback_flag = 0;
 /*----------------------------------½á¹¹Ìå------------------------------*/
-Shoot_Motor_t trigger_motor;                                  // ²¦µ¯ÂÖÊı¾İ
-fric_move_t fric_move;                                        // ·¢Éä¿ØÖÆ
+Shoot_Motor_t trigger_motor; // ²¦µ¯ÂÖÊı¾İ
+fric_move_t fric_move;       // ·¢Éä¿ØÖÆ
 /*----------------------------------Íâ²¿±äÁ¿---------------------------*/
 extern ExtY_stm32 stm32_Y_shoot;
-extern ext_power_heat_data_t power_heat_data_t;//»úÆ÷ÈËµ±Ç°µÄ¹¦ÂÊ×´Ì¬£¬Ö÷ÒªÅĞ¶ÏÇ¹¿ÚÈÈÁ¿
+extern ext_power_heat_data_t power_heat_data_t; // »úÆ÷ÈËµ±Ç°µÄ¹¦ÂÊ×´Ì¬£¬Ö÷ÒªÅĞ¶ÏÇ¹¿ÚÈÈÁ¿
 /*---------------------------------------------------------------------*/
 // ¿ØÖÆÄ£Ê½
 shoot_mode_e shoot_mode = SHOOT_STOP;                             // ´Ë´ÎÉä»÷Ä£Ê½
@@ -93,7 +92,6 @@ shoot_init_state_e shoot_init_state = SHOOT_INIT_UNFINISH;        // Éä»÷³õÊ¼»¯Ã
 shoot_motor_control_mode_e fric_motor_mode = SHOOT_MOTOR_STOP;    // Ä¦²ÁÂÖµç»ú
 shoot_motor_control_mode_e trigger_motor_mode = SHOOT_MOTOR_STOP; // ²¦µ¯ÅÌµç»ú
 
-
 /**
  * @brief          Éä»÷ÈÎÎñ£¬¼ä¸ô GIMBAL_CONTROL_TIME 1ms
  * @param[in]      pvParameters: ¿Õ
@@ -102,24 +100,24 @@ shoot_motor_control_mode_e trigger_motor_mode = SHOOT_MOTOR_STOP; // ²¦µ¯ÅÌµç»ú
 void shoot_task(void const *pvParameters)
 {
     vTaskDelay(GIMBAL_TASK_INIT_TIME);
-    //Éä»÷³õÊ¼»¯
+    // Éä»÷³õÊ¼»¯
     shoot_init();
     while (1)
     {
-        //ÉèÖÃ·¢ÉäÄ£Ê½
+        // ÉèÖÃ·¢ÉäÄ£Ê½
         Shoot_Set_Mode();
         // Ä£Ê½ÇĞ»»Êı¾İ¹ı¶É,Ö÷ÒªPIDÇå³ı£¬·ÀÖ¹Êı¾İ»ıÀÛÒı·¢µç»ú·´×ª
         shoot_mode_change_transit();
-        //·¢ÉäÊı¾İ¸üĞÂ
+        // ·¢ÉäÊı¾İ¸üĞÂ
         Shoot_Feedback_Update();
-        //Éä»÷¿ØÖÆÑ­»·
+        // Éä»÷¿ØÖÆÑ­»·
         shoot_control_loop();
-        //·¢ËÍ¿ØÖÆµçÁ÷
-//        if (!(toe_is_error(TRIGGER_MOTOR_TOE) && !toe_is_error(FRIC_LEFT_MOTOR_TOE) && !toe_is_error(FRIC_RIGHT_MOTOR_TOE)))
-//        {
-            // ·¢ËÍ¿ØÖÆÖ¸Áî
-            CAN_cmd_shoot(fric_move.fric_CAN_Set_Current[0], fric_move.fric_CAN_Set_Current[1], -trigger_motor.given_current, 0);
-//        }
+        // ·¢ËÍ¿ØÖÆµçÁ÷
+        //        if (!(toe_is_error(TRIGGER_MOTOR_TOE) && !toe_is_error(FRIC_LEFT_MOTOR_TOE) && !toe_is_error(FRIC_RIGHT_MOTOR_TOE)))
+        //        {
+        // ·¢ËÍ¿ØÖÆÖ¸Áî
+        CAN_cmd_shoot(fric_move.fric_CAN_Set_Current[0], fric_move.fric_CAN_Set_Current[1], -trigger_motor.given_current, 0);
+        //        }
         vTaskDelay(SHOOT_TASK_DELAY_TIME);
     }
 }
@@ -135,9 +133,9 @@ void shoot_init(void)
     trigger_motor.move_flag = 1;
     // ³õÊ¼»¯PID
     stm32_shoot_pid_init();
-    //Ä¦²ÁÂÖµç»úPIDÇå³ı
+    // Ä¦²ÁÂÖµç»úPIDÇå³ı
     stm32_step_shoot_pid_clear();
-    //²¦µ¯ÅÌpid
+    // ²¦µ¯ÅÌpid
     static const fp32 Trigger_speed_pid[3] = {900, 0, 100};
     PID_Init(&trigger_motor.motor_pid, PID_POSITION, Trigger_speed_pid, TRIGGER_READY_PID_MAX_OUT, TRIGGER_READY_PID_MAX_IOUT);
     // Êı¾İÖ¸Õë»ñÈ¡
@@ -154,7 +152,7 @@ void shoot_init(void)
     first_order_filter_init(&fric_move.fric1_cmd_slow_set_speed, SHOOT_CONTROL_TIME, fric_1_order_filter);
     first_order_filter_init(&fric_move.fric2_cmd_slow_set_speed, SHOOT_CONTROL_TIME, fric_2_order_filter);
 
-    //³õÊ¼»¯¿¨µ¯×´Ì¬Îª²»¿¨µ¯
+    // ³õÊ¼»¯¿¨µ¯×´Ì¬Îª²»¿¨µ¯
     trigger_motor.stuck_state = UNSTUCK;
     // ³õÊ¼»¯¿¨µ¯Ê±¼äÎª0
     trigger_motor.stuck_time = 0;
@@ -167,42 +165,42 @@ static void shoot_mode_change_transit(void)
 {
     if (last_shoot_mode != shoot_mode)
     {
-        //Ä£Ê½·¢ÉúÇĞ»»,pidÇå³ı
+        // Ä£Ê½·¢ÉúÇĞ»»,pidÇå³ı
         stm32_step_shoot_pid_clear();
     }
-		motor_last_angle = trigger_motor.angle;
+    motor_last_angle = trigger_motor.angle;
 }
 
-static bool_t judge_bullet_is_stuck(Shoot_Motor_t* trigger_stuck)
+static bool_t judge_bullet_is_stuck(Shoot_Motor_t *trigger_stuck)
 {
-    //ÅĞ¶Ï²¥µ¯µç»úµçÁ÷ÖµÊÇ·ñ¹ı´ó
+    // ÅĞ¶Ï²¥µ¯µç»úµçÁ÷ÖµÊÇ·ñ¹ı´ó
     if (abs(trigger_stuck->given_current) > STUCK_CURRENT)
     {
-        //¼ÆÊı¿¨µ¯Ê±¼ä
+        // ¼ÆÊı¿¨µ¯Ê±¼ä
         trigger_motor.stuck_time++;
-        //ÅĞ¶ÏÊÇ·ñ¿¨µ¯Ê±¼ä¹ı³¤
+        // ÅĞ¶ÏÊÇ·ñ¿¨µ¯Ê±¼ä¹ı³¤
         if (trigger_motor.stuck_time > STUCK_TIME)
         {
-            //±êÖ¾¿¨µ¯
+            // ±êÖ¾¿¨µ¯
             trigger_stuck->stuck_state = STUCK;
-            //¿¨µ¯Ê±¼ä¹éÁã
+            // ¿¨µ¯Ê±¼ä¹éÁã
             trigger_motor.stuck_time = 0;
         }
         else
         {
-            //¿¨µ¯Ê±¼ä¹éÁã
+            // ¿¨µ¯Ê±¼ä¹éÁã
             trigger_motor.stuck_time = 0;
         }
 
-        //ÅĞ¶ÏÊÇ·ñ¿¨µ¯
+        // ÅĞ¶ÏÊÇ·ñ¿¨µ¯
         if (trigger_motor.stuck_state == STUCK)
         {
             trigger_motor.reverse_time++;
             if (trigger_motor.reverse_time > REVERSE_TIME)
             {
-                //±êÖ¾²»¿¨µ¯
+                // ±êÖ¾²»¿¨µ¯
                 trigger_motor.stuck_state = UNSTUCK;
-                //¿¨µ¯»Ø²¦Ê±¼ä¹éÁã
+                // ¿¨µ¯»Ø²¦Ê±¼ä¹éÁã
                 trigger_motor.reverse_time = 0;
             }
         }
@@ -335,17 +333,17 @@ static void shoot_set_control_mode(fric_move_t *fric_set_control)
     }
 
     // ÔÆÌ¨ÔÚÄ³Ğ©Ä£Ê½ÏÂ·¢ÉäÍ£Ö¹
-//    if (gimbal_cmd_to_shoot_stop())
-//    {
-//        shoot_control_mode = SHOOT_STOP_CONTROL;
-//    }
+    //    if (gimbal_cmd_to_shoot_stop())
+    //    {
+    //        shoot_control_mode = SHOOT_STOP_CONTROL;
+    //    }
 
     // ÅĞ¶Ï½øÈë³õÊ¼»¯Ä£Ê½
     static shoot_control_mode_e last_shoot_control_mode = SHOOT_STOP_CONTROL;
     if (shoot_control_mode != SHOOT_STOP_CONTROL && last_shoot_control_mode == SHOOT_STOP_CONTROL)
     {
         // ½øÈë³õÊ¼»¯Ä£Ê½
-//        shoot_control_mode = SHOOT_INIT_CONTROL;
+        //        shoot_control_mode = SHOOT_INIT_CONTROL;
     }
     last_shoot_control_mode = shoot_control_mode;
 }
@@ -358,18 +356,15 @@ static void shoot_set_control_mode(fric_move_t *fric_set_control)
 static void Shoot_Set_Mode(void)
 {
 
-    
-    
-    //ÉèÖÃ·¢Éä¿ØÖÆÄ£Ê½
+    // ÉèÖÃ·¢Éä¿ØÖÆÄ£Ê½
     shoot_set_control_mode(&fric_move);
 
-    //±£ÁôÉÏ´ÎÉä»÷Ä£Ê½
+    // ±£ÁôÉÏ´ÎÉä»÷Ä£Ê½
     last_shoot_mode = shoot_mode;
 
-    //¸üĞÂµ±Ç°Éä»÷Ä£Ê½
-    
-    
-    //ÅĞ¶Ïµ±Ç°Ç¹¿ÚÈÈÁ¿ÊÇ·ñ¼´½«µ½´ï×î´óÖµ
+    // ¸üĞÂµ±Ç°Éä»÷Ä£Ê½
+
+    // ÅĞ¶Ïµ±Ç°Ç¹¿ÚÈÈÁ¿ÊÇ·ñ¼´½«µ½´ï×î´óÖµ
     if (GUARD_MAX_MUZZLE_HEAT - power_heat_data_t.shooter_id1_17mm_cooling_heat >= GUARD_MAX_ALLOW_MUZZLE_HEAT_ERR0R &&
         GUARD_MAX_MUZZLE_HEAT - power_heat_data_t.shooter_id2_17mm_cooling_heat >= GUARD_MAX_ALLOW_MUZZLE_HEAT_ERR0R)
     {
@@ -423,24 +418,22 @@ static void Shoot_Set_Mode(void)
     }
     else
     {
-        //¼´½«µ½´ï×î´óÖµ£¬Í£Ö¹·¢Éä
+        // ¼´½«µ½´ï×î´óÖµ£¬Í£Ö¹·¢Éä
         if (shoot_control_mode == SHOOT_AUTO_CONTROL)
         {
-            //Èç¹ûÎª×Ô¶¯¿ØÖÆÄ£Ê½ÔòÍ£Ö¹²¦µ¯
+            // Èç¹ûÎª×Ô¶¯¿ØÖÆÄ£Ê½ÔòÍ£Ö¹²¦µ¯
             shoot_mode = SHOOT_READY;
         }
         else if (shoot_control_mode == SHOOT_RC_CONTROL)
         {
-            //Èç¹ûÎªÒ£¿ØÆ÷¿ØÖÆÄ£Ê½£¬ÔòÍ£Ö¹Ò»ÇĞ
+            // Èç¹ûÎªÒ£¿ØÆ÷¿ØÖÆÄ£Ê½£¬ÔòÍ£Ö¹Ò»ÇĞ
             shoot_mode = SHOOT_STOP;
         }
         else
         {
             shoot_mode = SHOOT_STOP;
-					
         }
     }
-    
 }
 /**
  * @brief          ²¦µ¯ÂÖÑ­»·
@@ -451,10 +444,9 @@ void shoot_control_loop(void)
 {
     if (shoot_mode == SHOOT_BULLET)
     {
-        //ÅäÖÃÄ¦²ÁÂÖµç»úºÍ²¦µ¯ÅÌµç»ú×ª¶¯
+        // ÅäÖÃÄ¦²ÁÂÖµç»úºÍ²¦µ¯ÅÌµç»ú×ª¶¯
         fric_motor_mode = SHOOT_MOTOR_RUN;
         trigger_motor_mode = SHOOT_MOTOR_RUN;
-        
     }
     else if (shoot_mode == SHOOT_READY)
     {
@@ -464,30 +456,30 @@ void shoot_control_loop(void)
     }
     else if (shoot_mode == SHOOT_STOP)
     {
-        //ÅäÖÃÄ¦²ÁÂÖµç»úºÍ²¦µ¯ÅÌµç»úÍ£×ª
+        // ÅäÖÃÄ¦²ÁÂÖµç»úºÍ²¦µ¯ÅÌµç»úÍ£×ª
         fric_motor_mode = SHOOT_MOTOR_STOP;
         trigger_motor_mode = SHOOT_MOTOR_STOP;
     }
     else if (shoot_mode == SHOOT_INIT)
     {
-       
-        //ÅĞ¶ÏÊÇ·ñ³õÊ¼»¯Íê³É
-        if(shoot_init_state == SHOOT_INIT_UNFINISH)
+
+        // ÅĞ¶ÏÊÇ·ñ³õÊ¼»¯Íê³É
+        if (shoot_init_state == SHOOT_INIT_UNFINISH)
         {
-            //³õÊ¼»¯Î´Íê³É
-            //Î¢¶¯¿ª¹ØÊÇ·ñÃüÖĞ
+            // ³õÊ¼»¯Î´Íê³É
+            // Î¢¶¯¿ª¹ØÊÇ·ñÃüÖĞ
             if (BUTTEN_TRIG_PIN == RELEASE)
             {
                 shoot_init_state = SHOOT_INIT_UNFINISH;
-                //Î´°´ÏÂ,ÅäÖÃ²¦µ¯ÅÌ×ª¶¯,Ä¦²ÁÂÖÍ£×ª
+                // Î´°´ÏÂ,ÅäÖÃ²¦µ¯ÅÌ×ª¶¯,Ä¦²ÁÂÖÍ£×ª
                 fric_motor_mode = SHOOT_MOTOR_STOP;
                 trigger_motor_mode = SHOOT_MOTOR_RUN;
             }
             else
             {
-                //°´ÏÂ
+                // °´ÏÂ
                 shoot_init_state = SHOOT_INIT_FINISH;
-                //µç»úÍ£×ª
+                // µç»úÍ£×ª
                 fric_motor_mode = SHOOT_MOTOR_STOP;
                 trigger_motor_mode = SHOOT_MOTOR_STOP;
             }
@@ -501,63 +493,64 @@ void shoot_control_loop(void)
         }
     }
 
-
-    //¸ù¾İµç»úÄ£Ê½ÅäÖÃµç»ú×ª¶¯ËÙ¶È
+    // ¸ù¾İµç»úÄ£Ê½ÅäÖÃµç»ú×ª¶¯ËÙ¶È
     switch (fric_motor_mode)
     {
     case SHOOT_MOTOR_RUN:
-        //ÅäÖÃµç»ú×ª¶¯
+        // ÅäÖÃµç»ú×ª¶¯
         fric = FRIC_MOTOR_RUN_SPEED;
         break;
     case SHOOT_MOTOR_STOP:
-        //ÅäÖÃµç»úÍ£×ª
+        // ÅäÖÃµç»úÍ£×ª
         fric = FRIC_MOTOR_STOP_SPEED;
         break;
     }
 
-
     switch (trigger_motor_mode)
     {
     case SHOOT_MOTOR_RUN:
-			a = 1;
-			b = 0;
+        a = 1;
+        b = 0;
         trigger_motor.speed_set = TRIGGER_MOTOR_RUN_SPEED;
         break;
     case SHOOT_MOTOR_STOP:
-				a = 2;
+        a = 2;
         trigger_motor.speed_set = TRIGGER_MOTOR_STOP_SPEED;
         break;
     }
-		
- 
+
     // pid¼ÆËã
     fric_control_loop(&fric_move);        // Ä¦²ÁÂÖ¿ØÖÆ
-    trigger_control_loop(&trigger_motor); // ²¦µ¯ÅÌ¿ØÖÆ 
-		//ÅĞ¶ÏÍ£Ö¹·¢µ¯Ôò»Ø²¦
-				if (a == 2 && b==0)
-		{
-//      trigger_motor.given_current = -300;
-//			if(fabs(motor_last_angle-trigger_motor.angle)>5)
-//			b++;
-				   sum +=fabs(fabs(trigger_motor.angle) - fabs(motor_last_angle));
-			
-						trigger_motor.given_current = -4000.;
+    trigger_control_loop(&trigger_motor); // ²¦µ¯ÅÌ¿ØÖÆ
+    // ÅĞ¶ÏÍ£Ö¹·¢µ¯Ôò»Ø²¦
+     if((fric_move.shoot_rc->rc.ch[4]) > 300)
+     {
+        turnback_flag = 1;
+      }  
 
-			
-			if(fabs(sum)>10)
-			{
-//				trigger_motor.given_current = 0;
-				trigger_motor.speed_set = 0 ;
-				b++;
-				sum=0;
-			}
-		}
-//    //ÅĞ¶ÏÊÇ·ñ¿¨µ¯
-//    if (judge_bullet_is_stuck(&trigger_motor))
-//    {
-//        //»Ø²¦
-//        trigger_motor.given_current = -4000;
-//    }
+      if(turnback_flag == 1)
+      {
+    			if (a == 2 && b==0)
+    	{
+    			   sum +=fabs(fabs(trigger_motor.angle) - fabs(motor_last_angle));
+    					trigger_motor.given_current = -4000;
+
+    		if(fabs(sum)>10)
+    		{
+    			trigger_motor.speed_set = 0 ;
+    			b++;
+    			sum=0;
+					turnback_flag = 0;
+    		}
+    	}
+      }
+
+    //    //ÅĞ¶ÏÊÇ·ñ¿¨µ¯
+    //    if (judge_bullet_is_stuck(&trigger_motor))
+    //    {
+    //        //»Ø²¦
+    //        trigger_motor.given_current = -4000;
+    //    }
 }
 /**
  * @brief  Ä¦²ÁÂÖ¿ØÖÆÑ­»·
@@ -573,21 +566,21 @@ static void fric_control_loop(fric_move_t *fric_move_control_loop)
     fric_move.fric_CAN_Set_Current[0] = stm32_Y_shoot.out_shoot_0;
     fric_move.fric_CAN_Set_Current[1] = stm32_Y_shoot.out_shoot_1;
 }
-static void trigger_control_loop(Shoot_Motor_t* trigger_move_control_loop)
+static void trigger_control_loop(Shoot_Motor_t *trigger_move_control_loop)
 {
     trigger_move_control_loop->motor_pid.max_out = TRIGGER_BULLET_PID_MAX_OUT;
     trigger_move_control_loop->motor_pid.max_iout = TRIGGER_BULLET_PID_MAX_IOUT;
     PID_Calc(&trigger_move_control_loop->motor_pid, trigger_move_control_loop->speed, trigger_move_control_loop->speed_set); // ²¦µ¯ÅÌ
     trigger_move_control_loop->given_current = (int16_t)(trigger_move_control_loop->motor_pid.out);
 }
-//Éä»÷¿ØÖÆÊÓ¾õ
+// Éä»÷¿ØÖÆÊÓ¾õ
 bool_t shoot_control_vision_task(void)
 {
     if (shoot_mode == SHOOT_INIT || shoot_control_mode == SHOOT_INIT || toe_is_error(DBUS_TOE))
     {
-        //Éä»÷³õÊ¼»¯Ä£Ê½£¬Ò£¿ØÆ÷ÎŞĞÅºÅ£¬Í£Ö¹ÔËĞĞ
+        // Éä»÷³õÊ¼»¯Ä£Ê½£¬Ò£¿ØÆ÷ÎŞĞÅºÅ£¬Í£Ö¹ÔËĞĞ
         return 0;
-    }   
+    }
     else
     {
         return 1;

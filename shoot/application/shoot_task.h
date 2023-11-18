@@ -42,7 +42,7 @@
 #define FRIC_MOTOR_STOP_SPEED 0
 
 //拨弹盘电机转速   10
-#define TRIGGER_MOTOR_RUN_SPEED 20.0
+#define TRIGGER_MOTOR_RUN_SPEED 15.0
 //拨弹盘电机停转
 #define TRIGGER_MOTOR_STOP_SPEED 0
 
