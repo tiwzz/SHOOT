@@ -117,7 +117,7 @@ void shoot_task(void const *pvParameters)
         //        {
         // ·¢ËÍ¿ØÖÆÖ¸Áî
         CAN_cmd_shoot(fric_move.fric_CAN_Set_Current[0], fric_move.fric_CAN_Set_Current[1], -trigger_motor.given_current, 0);
-        //        }
+        //        }-trigger_motor.given_current
         vTaskDelay(SHOOT_TASK_DELAY_TIME);
     }
 }
@@ -511,7 +511,10 @@ void shoot_control_loop(void)
     case SHOOT_MOTOR_RUN:
         a = 1;
         b = 0;
-        trigger_motor.speed_set = TRIGGER_MOTOR_RUN_SPEED;
+		if((fric_move.shoot_rc->rc.ch[4]) > 300)
+        trigger_motor.speed_set = -TRIGGER_MOTOR_RUN_SPEED;
+		else if((fric_move.shoot_rc->rc.ch[4]) < -300)
+				trigger_motor.speed_set = TRIGGER_MOTOR_RUN_SPEED;
         break;
     case SHOOT_MOTOR_STOP:
         a = 2;
@@ -533,7 +536,7 @@ void shoot_control_loop(void)
     			if (a == 2 && b==0)
     	{
     			   sum +=fabs(fabs(trigger_motor.angle) - fabs(motor_last_angle));
-    					trigger_motor.given_current = -4000;
+//    					trigger_motor.given_current = -4000;
 
     		if(fabs(sum)>10)
     		{

@@ -98,6 +98,12 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
             detect_hook(PITCH_GIMBAL_MOTOR_TOE);
             break;
         }
+				case CAN_TRIGGER_MOTOR_ID:
+        {
+            get_motor_measure(&motor_tri, rx_data);
+            detect_hook(TRIGGER_MOTOR_TOE);
+            break;
+        }
         default:
         {
             break;
@@ -108,12 +114,12 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
     {
         switch (rx_header.StdId)
         {
-        case CAN_TRIGGER_MOTOR_ID:
-        {
-            get_motor_measure(&motor_tri, rx_data);
-            detect_hook(TRIGGER_MOTOR_TOE);
-            break;
-        }
+//        case CAN_TRIGGER_MOTOR_ID:
+//        {
+//            get_motor_measure(&motor_tri, rx_data);
+//            detect_hook(TRIGGER_MOTOR_TOE);
+//            break;
+//        }
         case CAN_3508_S1_ID:
         {
             get_motor_measure(&motor_shoot[rx_header.StdId - CAN_3508_S1_ID], rx_data);
@@ -149,7 +155,7 @@ void CAN_cmd_shoot(int16_t fric1,int16_t fric2 ,int16_t shoot, int16_t rev)
    shoot_can_send_data[5] = shoot;
    shoot_can_send_data[6] = (rev >> 8);
    shoot_can_send_data[7] = rev;
-   HAL_CAN_AddTxMessage(&hcan2, &shoot_tx_message, shoot_can_send_data, &send_mail_box);
+   HAL_CAN_AddTxMessage(&hcan1, &shoot_tx_message, shoot_can_send_data, &send_mail_box);
 }
 
 
