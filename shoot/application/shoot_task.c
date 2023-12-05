@@ -77,6 +77,7 @@ fp32 motor_last_angle = 0;
 fp32 sum = 0;
 int b = 0;
 int turnback_flag = 0;
+fp32 rc_speedset;
 /*----------------------------------结构体------------------------------*/
 Shoot_Motor_t trigger_motor; // 拨弹轮数据
 fric_move_t fric_move;       // 发射控制
@@ -226,6 +227,9 @@ static void Shoot_Feedback_Update(void)
     speed_fliter_2 = speed_fliter_3;
     speed_fliter_3 = speed_fliter_2 * fliter_num[0] + speed_fliter_1 * fliter_num[1] + (trigger_motor.shoot_motor_measure->speed_rpm * Motor_RMP_TO_SPEED) * fliter_num[2];
     trigger_motor.speed = -speed_fliter_3;
+
+    rc_speedset = fric_move.shoot_rc->rc.ch[1];
+
     // 电机圈数重置， 因为输出轴旋转一圈， 电机轴旋转 36圈，将电机轴数据处理成输出轴数据，用于控制输出轴角度
     if (trigger_motor.shoot_motor_measure->ecd - trigger_motor.shoot_motor_measure->last_ecd > Half_ecd_range)
     {
@@ -506,54 +510,50 @@ void shoot_control_loop(void)
         break;
     }
 
-    switch (trigger_motor_mode)
-    {
-    case SHOOT_MOTOR_RUN:
-        a = 1;
-        b = 0;
-		if((fric_move.shoot_rc->rc.ch[4]) > 300)
-        trigger_motor.speed_set = -TRIGGER_MOTOR_RUN_SPEED;
-		else if((fric_move.shoot_rc->rc.ch[4]) < -300)
-				trigger_motor.speed_set = TRIGGER_MOTOR_RUN_SPEED;
-        break;
-    case SHOOT_MOTOR_STOP:
-        a = 2;
-        trigger_motor.speed_set = TRIGGER_MOTOR_STOP_SPEED;
-        break;
-    }
+    //    switch (trigger_motor_mode)
+    //    {
+    //    case SHOOT_MOTOR_RUN:
+    a = 1;
+    b = 0;
+    //		if((fric_move.shoot_rc->rc.ch[1]) > 100)
+    if (fric_move.shoot_rc->rc.s[0] == 2 && fric_move.shoot_rc->rc.s[1] == 1)
+        trigger_motor.speed_set = -TRIGGER_MOTOR_RUN_SPEED * (rc_speedset / 660);
+    else
+        trigger_motor.speed_set = 0;
+    //		else if((fric_move.shoot_rc->rc.ch[1]) < -100)
+    //				trigger_motor.speed_set = TRIGGER_MOTOR_RUN_SPEED* (float)(fric_move.shoot_rc->rc.ch[1]/ 660);
+    //        break;
+    //    case SHOOT_MOTOR_STOP:
+    //        a = 2;
+    //        trigger_motor.speed_set = TRIGGER_MOTOR_STOP_SPEED;
+    //        break;
+    //    }
 
     // pid计算
     fric_control_loop(&fric_move);        // 摩擦轮控制
     trigger_control_loop(&trigger_motor); // 拨弹盘控制
-    // 判断停止发弹则回拨
-     if((fric_move.shoot_rc->rc.ch[4]) > 300)
-     {
+                                          // 判断停止发弹则回拨
+    if ((fric_move.shoot_rc->rc.ch[1]) > 400)
+    {
         turnback_flag = 1;
-      }  
+    }
 
-      if(turnback_flag == 1)
-      {
-    			if (a == 2 && b==0)
-    	{
-    			   sum +=fabs(fabs(trigger_motor.angle) - fabs(motor_last_angle));
-//    					trigger_motor.given_current = -4000;
+    if (turnback_flag == 1)
+    {
+        if (a == 2 && b == 0)
+        {
+            sum += fabs(fabs(trigger_motor.angle) - fabs(motor_last_angle));
+            //    					trigger_motor.given_current = -4000;
 
-    		if(fabs(sum)>10)
-    		{
-    			trigger_motor.speed_set = 0 ;
-    			b++;
-    			sum=0;
-					turnback_flag = 0;
-    		}
-    	}
-      }
-
-    //    //判断是否卡弹
-    //    if (judge_bullet_is_stuck(&trigger_motor))
-    //    {
-    //        //回拨
-    //        trigger_motor.given_current = -4000;
-    //    }
+            if (fabs(sum) > 10)
+            {
+                trigger_motor.speed_set = 0;
+                b++;
+                sum = 0;
+                turnback_flag = 0;
+            }
+        }
+    }
 }
 /**
  * @brief  摩擦轮控制循环
